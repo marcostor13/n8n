@@ -1,0 +1,78 @@
+services:
+
+  # ── Base de datos ──────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:             ${POSTGRES_USER}
+      POSTGRES_PASSWORD:         ${POSTGRES_PASSWORD}
+      POSTGRES_DB:               ${POSTGRES_DB}
+      POSTGRES_NON_ROOT_USER:    ${POSTGRES_NON_ROOT_USER}
+      POSTGRES_NON_ROOT_PASSWORD: ${POSTGRES_NON_ROOT_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── n8n ───────────────────────────────────────────────────
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Base de datos
+      DB_TYPE:                    postgresdb
+      DB_POSTGRESDB_HOST:         postgres
+      DB_POSTGRESDB_PORT:         5432
+      DB_POSTGRESDB_DATABASE:     ${POSTGRES_DB}
+      DB_POSTGRESDB_USER:         ${POSTGRES_NON_ROOT_USER}
+      DB_POSTGRESDB_PASSWORD:     ${POSTGRES_NON_ROOT_PASSWORD}
+      # URLs y host
+      N8N_HOST:                   ${N8N_HOST}
+      N8N_PORT:                   5678
+      N8N_PROTOCOL:               https
+      WEBHOOK_URL:                https://${N8N_HOST}/
+      N8N_EDITOR_BASE_URL:        https://${N8N_HOST}/
+      # Seguridad
+      N8N_ENCRYPTION_KEY:         ${N8N_ENCRYPTION_KEY}
+      # Email (para invitaciones y notificaciones)
+      N8N_EMAIL_MODE:             ${N8N_EMAIL_MODE:-}
+      N8N_SMTP_HOST:              ${N8N_SMTP_HOST:-}
+      N8N_SMTP_PORT:              ${N8N_SMTP_PORT:-}
+      N8N_SMTP_USER:              ${N8N_SMTP_USER:-}
+      N8N_SMTP_PASS:              ${N8N_SMTP_PASS:-}
+      N8N_SMTP_SENDER:            ${N8N_SMTP_SENDER:-}
+      # Zona horaria
+      GENERIC_TIMEZONE:           ${GENERIC_TIMEZONE:-America/Mexico_City}
+      TZ:                         ${GENERIC_TIMEZONE:-America/Mexico_City}
+      # Ejecución de código (funciones JS/Python)
+      NODE_FUNCTION_ALLOW_BUILTIN: "*"
+      NODE_FUNCTION_ALLOW_EXTERNAL: "*"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Admin de base de datos (Adminer) ──────────────────────
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "8888:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN:         pepa-linha-dark
+    depends_on:
+      - postgres
+
+# ── Volúmenes persistentes ────────────────────────────────
+volumes:
+  postgres_data:      # datos de PostgreSQL
+  n8n_data:           # credenciales, settings y workflows de n8n

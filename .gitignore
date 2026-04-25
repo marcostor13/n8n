@@ -1,5 +1,6 @@
 .env
 .env.local
+init-data.sh.bak
 .claude/
 node_modules/
 __pycache__/
