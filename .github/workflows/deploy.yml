@@ -16,13 +16,19 @@ jobs:
     steps:
       - name: Trigger Coolify deploy
         run: |
-          RESPONSE=$(curl --silent --fail -L -k \
+          RESPONSE=$(curl --silent -L -k \
             --request GET "${{ secrets.COOLIFY_WEBHOOK }}" \
             --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            --header "Accept: application/json" \
             -w "\nHTTP:%{http_code}")
 
           HTTP=$(echo "$RESPONSE" | grep "HTTP:" | cut -d: -f2)
-          echo "Coolify response: HTTP $HTTP"
+          BODY=$(echo "$RESPONSE" | grep -v "HTTP:")
+
+          echo "── Coolify response ──"
+          echo "HTTP: $HTTP"
+          echo "Body: $BODY"
+          echo "─────────────────────"
 
           if [[ "$HTTP" != "200" && "$HTTP" != "201" ]]; then
             echo "Error al hacer deploy (HTTP $HTTP)"
