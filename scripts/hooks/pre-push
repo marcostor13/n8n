@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Git hook pre-push — se ejecuta antes de cada 'git push'
+# Agrega aquí tus checks: tests, linting, type-check, etc.
+set -euo pipefail
+
+echo "[ pre-push ] Verificando antes de enviar a GitHub..."
+
+# ── Ejemplos — descomenta los que uses ───────────────────────
+
+# Node.js / npm
+# command -v npm &>/dev/null && npm test
+
+# Python
+# command -v pytest &>/dev/null && pytest --tb=short -q
+
+# Docker build check
+# docker build -t pre-push-check . && docker rmi pre-push-check
+
+# ─────────────────────────────────────────────────────────────
+echo "[ pre-push ] OK — continuando con el push."
+exit 0

@@ -1,0 +1,23 @@
+# nixpacks.toml — Coolify build configuration
+# Nixpacks auto-detecta el stack (Node, Python, Go, etc.)
+# Solo necesitas este archivo si quieres sobreescribir el comportamiento por defecto.
+#
+# Descomenta y ajusta según tu stack:
+
+# ── Variables de entorno de build ────────────────────────────
+[variables]
+NODE_ENV = "production"
+# PYTHON_VERSION = "3.12"
+# NODE_VERSION = "22"
+
+# ── Fase de setup (paquetes del sistema) ─────────────────────
+# [phases.setup]
+# nixPkgs = ["nodejs_22", "python312"]
+
+# ── Fase de build ─────────────────────────────────────────────
+# [phases.build]
+# cmds = ["npm ci", "npm run build"]
+
+# ── Comando de inicio ─────────────────────────────────────────
+# [start]
+# cmd = "npm start"

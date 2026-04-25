@@ -1,0 +1,54 @@
+name: Deploy → Coolify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # ── Deploy a producción (solo en push a main) ─────────────
+  deploy-production:
+    name: Deploy → Producción
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Trigger Coolify deploy
+        run: |
+          RESPONSE=$(curl --silent --fail \
+            --request GET "${{ secrets.COOLIFY_WEBHOOK }}" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            -w "\nHTTP:%{http_code}")
+
+          HTTP=$(echo "$RESPONSE" | grep "HTTP:" | cut -d: -f2)
+          echo "Coolify response: HTTP $HTTP"
+
+          if [[ "$HTTP" != "200" && "$HTTP" != "201" ]]; then
+            echo "Error al hacer deploy (HTTP $HTTP)"
+            exit 1
+          fi
+
+          echo "✓ Deploy disparado exitosamente"
+
+  # ── Preview deploy para Pull Requests ────────────────────
+  deploy-preview:
+    name: Deploy → Preview (PR #${{ github.event.pull_request.number }})
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Trigger Coolify preview deploy
+        # Requiere configurar un recurso de PR deployment en Coolify
+        # y agregar COOLIFY_PREVIEW_WEBHOOK en GitHub Secrets
+        run: |
+          if [ -z "${{ secrets.COOLIFY_PREVIEW_WEBHOOK }}" ]; then
+            echo "COOLIFY_PREVIEW_WEBHOOK no configurado — saltando preview deploy"
+            exit 0
+          fi
+
+          curl --silent --fail \
+            --request GET "${{ secrets.COOLIFY_PREVIEW_WEBHOOK }}&pr=${{ github.event.pull_request.number }}" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
+
+          echo "✓ Preview deploy disparado para PR #${{ github.event.pull_request.number }}"
