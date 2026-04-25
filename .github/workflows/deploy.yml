@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Trigger Coolify deploy
         run: |
-          RESPONSE=$(curl --silent --fail -L \
+          RESPONSE=$(curl --silent --fail -L -k \
             --request GET "${{ secrets.COOLIFY_WEBHOOK }}" \
             --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             -w "\nHTTP:%{http_code}")
@@ -47,7 +47,7 @@ jobs:
             exit 0
           fi
 
-          curl --silent --fail -L \
+          curl --silent --fail -L -k \
             --request GET "${{ secrets.COOLIFY_PREVIEW_WEBHOOK }}&pr=${{ github.event.pull_request.number }}" \
             --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
 
