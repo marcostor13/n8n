@@ -27,8 +27,15 @@ jobs:
 
           echo "── Coolify response ──"
           echo "HTTP: $HTTP"
-          echo "Body: $BODY"
+          echo "Body (primeros 300 chars): ${BODY:0:300}"
           echo "─────────────────────"
+
+          # Si devuelve HTML es porque la URL apunta al frontend, no a /api/v1/deploy
+          if echo "$BODY" | grep -q "<!DOCTYPE html>"; then
+            echo "ERROR: La URL no es un endpoint API — apunta al frontend de Coolify."
+            echo "Corrige COOLIFY_WEBHOOK → https://tu-coolify.com/api/v1/deploy?uuid=APP_UUID"
+            exit 1
+          fi
 
           if [[ "$HTTP" != "200" && "$HTTP" != "201" ]]; then
             echo "Error al hacer deploy (HTTP $HTTP)"
